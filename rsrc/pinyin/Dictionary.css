@@ -1,0 +1,26 @@
+@charset "UTF-8";
+@namespace d url(http://www.apple.com/DTDs/DictionaryService-1.0.rng);
+
+d|entry {
+}
+
+h1	{
+	font-size: 1.5em;
+	font-weight: normal;
+}
+
+h3	{
+	font-size: 1.0em;
+	font-weight: normal;
+}
+
+.syntax {
+}
+
+.t {
+	font-family: "BiauKai", "Apple LiGothic";
+}
+
+.s {
+	font-family: "Kai", "Hei";
+}

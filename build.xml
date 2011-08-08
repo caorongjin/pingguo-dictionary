@@ -1,0 +1,96 @@
+<project name="Pingguo" default="all" basedir=".">
+	<property name="src" location="src" />
+	<property name="bin" location="bin" />
+	<property name="lib" location="lib" />
+	<property name="dist" location="dist" />
+	<property name="rsrc" location="rsrc" />
+	<property name="rsrc.py" location="${rsrc}/pinyin" />
+	<property name="rsrc.zy" location="${rsrc}/zhuyin" />
+	<property name="commons-collections.jar" value="commons-collections-3.2.1.jar" />
+	<property name="cedict.txt" value="cedict_ts.u8" />
+	<property name="version" value="1.0.0.3" />
+
+	<target name="all">
+		<antcall target="compile" />
+		<antcall target="generate-xml" />
+		<antcall target="generate-dictionary" />
+		<antcall target="dist" />
+	</target>
+
+	<target name="init">
+		<tstamp>
+			<format property="logtime" pattern="HH:mm:ss z" />
+		</tstamp>
+	</target>
+
+	<target name="compile" depends="init,clean">
+		<echo message="${logtime}: Compile Java parsing code" />
+
+		<mkdir dir="${bin}" />
+
+		<javac srcdir="${src}" destdir="${bin}" debug="on">
+			<classpath>
+				<pathelement location="${lib}/${commons-collections.jar}" />
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="generate-xml" depends="init">
+		<echo message="${logtime}: Converting CEDICT" />
+			
+		<java classname="com.caorongjin.pingguo.Pingguo">
+			<arg value="${rsrc}/${cedict.txt}" />
+			<arg value="${rsrc.py}/Dictionary.xml" />
+			<arg value="${rsrc.zy}/Dictionary.xml" />
+			<classpath>
+				<pathelement path="${bin}" />
+				<pathelement location="${lib}/${commons-collections.jar}" />
+			</classpath>
+		</java>
+	</target>
+
+	<target name="generate-dictionary" depends="init">
+		<echo message="${logtime}: Generating pinyin dictionary files" />
+
+		<exec executable="/Developer/Extras/Dictionary Development Kit/bin/build_dict.sh" dir="${rsrc.py}">
+		<!--	<arg value="-v 10.6" />-->
+			<arg value="Pingguo Dictionary PY" />
+			<arg value="${rsrc.py}/Dictionary.xml" />
+			<arg value="${rsrc.py}/Dictionary.css" />
+			<arg value="${rsrc.py}/Dictionary.plist" />
+		</exec>
+
+		<echo message="${logtime}: Generating zhuyin dictionary files" />
+
+		<exec executable="/Developer/Extras/Dictionary Development Kit/bin/build_dict.sh" dir="${rsrc.zy}">
+		<!--	<arg value="-v 10.6" />-->
+			<arg value="Pingguo Dictionary ZY" />
+			<arg value="${rsrc.zy}/Dictionary.xml" />
+			<arg value="${rsrc.zy}/Dictionary.css" />
+			<arg value="${rsrc.zy}/Dictionary.plist" />
+		</exec>
+	</target>
+
+	<target name="dist" depends="init">
+		<echo message="${logtime}: Creating distribution" />
+
+		<zip destfile="${dist}/Pingguo Dictionary PY ${version}.zip">
+			<zipfileset dir="${rsrc.py}/objects" includes="*.dictionary/**" />
+			<zipfileset dir="${dist}" includes="README.rtfd/**"	/>
+		</zip>
+
+		<zip destfile="${dist}/Pingguo Dictionary ZY ${version}.zip">
+			<zipfileset dir="${rsrc.zy}/objects" includes="*.dictionary/**" />
+			<zipfileset dir="${dist}" includes="README.rtfd/**"	/>
+		</zip>
+	</target>
+
+	<target name="clean">
+		<delete dir="${bin}" />
+		<delete file="${rsrc.py}/Dictionary.xml" />
+		<delete file="${rsrc.zy}/Dictionary.xml" />
+		<delete dir="${rsrc.py}/objects" />
+		<delete dir="${rsrc.zy}/objects" />
+		<delete file="${dist}/*.zip" />
+	</target>
+</project>
