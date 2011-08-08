@@ -2,13 +2,13 @@
  * Copyright (c) 2008-2011 Alexander Chow
  *
  * Pingguo Dictionary is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by the 
- * Free Software Foundation, either version 3 of the License, or (at your 
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
  * option) any later version.
  *
- * Pingguo Dictionary is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ * Pingguo Dictionary is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
  * for more details.
  */
 package com.caorongjin.pingguo;
@@ -20,7 +20,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
 
 import org.apache.commons.collections.map.MultiValueMap;
 
@@ -38,6 +42,8 @@ public class Pingguo {
 				new OutputStreamWriter(new FileOutputStream(args[1]), "UTF8"));
 			zyw = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(args[2]), "UTF8"));
+
+			_version = args[3];
 
 			Pingguo pg = new Pingguo(br, pyw, zyw);
 
@@ -79,26 +85,26 @@ public class Pingguo {
 			if (currLine == null) {
 				currLine = _readLine();
 			}
-			
+
 			if (nextLine == null) {
 				nextLine = _readLine();
 			}
-			
+
 			if (currLine == null) {
 				break;
 			}
-			
+
 			curr.parse(currLine);
-			
+
 			while (nextLine != null) {
 				next.parse(nextLine);
-				
+
 				if (curr.getTrad().equals(next.getTrad()) &&
 					curr.getSimp().equals(next.getSimp()) &&
 					curr.getPinyin().equals(next.getPinyin())) {
-					
+
 					curr.append(next);
-					
+
 					nextLine = _readLine();
 				}
 				else {
@@ -107,19 +113,19 @@ public class Pingguo {
 			}
 
 			_id++;
-			
+
 			_insertEntry(_pyw, curr, true);
 			_insertEntry(_zyw, curr, false);
 
 			final String pyTitle = curr.getTitle(true);
 			final String zyTitle = curr.getTitle(false);
-			
+
 			for (String def : curr.getDefs()) {
 				if (def != null && def.trim().length() > 0) {
 					_mvp.put(def, new Object[] { pyTitle, zyTitle, _id });
 				}
 			}
-			
+
 			currLine = nextLine;
 			nextLine = null;
 		}
@@ -131,18 +137,29 @@ public class Pingguo {
 		_writePostFix(_zyw, false);
 	}
 
-	private String _readLine() throws IOException {
+	private String _readLine() throws Exception {
 		for (;;) {
 			String line = _br.readLine();
-		
+
 			if (line == null) {
 				return null;
 			}
-		
+
 			line = line.trim();
-		
+
 			if (!line.startsWith("#") && line.length() > 0) {
 				return line;
+			}
+			else if (line.startsWith("#! date=")) {
+				line = line.substring(line.indexOf('=') + 1);
+
+				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+				Date date = formatter.parse(line);
+
+				formatter = new SimpleDateFormat("dd MMMM yyyy");
+
+				_cedict_release_date = formatter.format(date);
 			}
 		}
 	}
@@ -156,39 +173,49 @@ public class Pingguo {
 
 	private void _writePostFix(BufferedWriter bw, boolean pinyin)
 		throws IOException {
-		
+
 		String edition = pinyin ? "(Pinyin Edition)" : "(Zhuyin Edition)";
-		
+
 		bw.write(
 			"<d:entry id=\"front_back_matter\" d:title=\"Front/Back Matter\">\n" +
-			"<h1><b>Pingguo Chinese-English Dictionary v" + _VERSION + ", " + 
+			"<h1><b>Pingguo Chinese-English Dictionary v" + _version + ", " +
 			edition + "</b></h1>\n" + "<div>" +
-			"Copyright &#169; 2008-2010 Alexander Chow. Dictionary contents are distributed as <a href=\"http://www.mdbg.net/chindict/chindict.php?page=cedict\">CC-CEDICT</a> (released " + _CEDICT_RELEASE_DATE + ") " +
-			"under the <a href=\"http://creativecommons.org/licenses/by-sa/3.0/\">Creative Commons Attribution-Share Alike 3.0</a> license." +
+			"Copyright &#169; 2008-" + _calendar.get(Calendar.YEAR) +
+			" Alexander Chow. Dictionary contents are distributed as " +
+			"<a href=\"http://bit.ly/cc-cedict\">CC-CEDICT</a> (released " +
+			_cedict_release_date + ") under the " +
+			"<a href=\"http://creativecommons.org/licenses/by-sa/3.0/\">" +
+			"Creative Commons Attribution-Share Alike 3.0</a> license." +
 			"</div>\n" +
 			"</d:entry>\n" +
 			"</d:dictionary>");
 	}
 
-	private void _buildEnglishIndex(BufferedWriter bw, boolean pinyin) 
+	private void _buildEnglishIndex(BufferedWriter bw, boolean pinyin)
 		throws Exception {
 
+		@SuppressWarnings("unchecked")
 		Collection<String> defs = _mvp.keySet();
 		long index = _id + 1;
-		
+
 		for (String def : defs) {
-			bw.write("<d:entry id=\"" + (++index) + "\" d:title=\"" + Word.escape(def) + "\">\n");
+			bw.write(
+				"<d:entry id=\"" + (++index) + "\" d:title=\"" +
+				Word.escape(def) + "\">\n");
 			_insertIndex(bw, def, def);
 			bw.write("<div><h1>" + def + "</h1></div>\n");
 			bw.write("<div><ul>\n");
 
+			@SuppressWarnings("unchecked")
 			Collection<Object[]> titleIdPairs = _mvp.getCollection(def);
 
 			for (Object[] titleIdPair : titleIdPairs) {
 				String title = (String)titleIdPair[pinyin ? 0 : 1];
 				long id = (Long)titleIdPair[2];
 
-				bw.write("<li><a href=\"x-dictionary:r:" + id + "\">" + title + "</a></li>");
+				bw.write(
+					"<li><a href=\"x-dictionary:r:" + id + "\">" + title +
+					"</a></li>");
 			}
 
 			bw.write("</ul></div>\n");
@@ -196,12 +223,14 @@ public class Pingguo {
 		}
 	}
 
-	private void _insertEntry(BufferedWriter bw, Word word, boolean pinyin) 
+	private void _insertEntry(BufferedWriter bw, Word word, boolean pinyin)
 		throws Exception {
-		
+
 		String title = word.getTitle(pinyin);
 
-		bw.write("<d:entry id=\"" + _id + "\" d:title=\"" + Word.escape(title) + "\">\n");
+		bw.write(
+			"<d:entry id=\"" + _id + "\" d:title=\"" + Word.escape(title) +
+			"\">\n");
 
 		// Index
 
@@ -220,7 +249,7 @@ public class Pingguo {
 		// <div><h1>make</h1></div><span class="syntax"><span d:pr="">| māk |</span></span>
 
 		// Characters
-		
+
 		bw.write("<div><h1>");
 		bw.write("<span class=\"t\">");
 		bw.write(word.getTrad());
@@ -234,7 +263,12 @@ public class Pingguo {
 		// Phonetic
 
 		bw.write("<span class=\"syntax\"><span d:pr=\"\">| ");
-		bw.write(pinyin ? Pinyin.format(word.getPinyin()) : Zhuyin.format(word.getPinyin()));
+		if (pinyin) {
+			bw.write(Pinyin.format(word.getPinyin()));
+		}
+		else {
+			bw.write(Zhuyin.format(word.getPinyin()));
+		}
 		bw.write(" |</span></span>");
 
 		// Definition
@@ -249,7 +283,7 @@ public class Pingguo {
 		bw.write("</d:entry>\n");
 	}
 
-	private void _insertIndex(BufferedWriter bw, String value, String title) 
+	private void _insertIndex(BufferedWriter bw, String value, String title)
 		throws IOException {
 
 		bw.write("<d:index d:value=\"");
@@ -265,8 +299,8 @@ public class Pingguo {
 	private MultiValueMap _mvp;
 	private long _id = 0;
 
-	private static final String _CEDICT_RELEASE_DATE = "2010-05-02 21:59:33 GMT ";
-
-	private static final String _VERSION = "1.0.0.2";
+	private static Calendar _calendar = GregorianCalendar.getInstance();
+	private static String _cedict_release_date = "??";
+	private static String _version;
 
 }

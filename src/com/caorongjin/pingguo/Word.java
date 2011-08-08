@@ -2,13 +2,13 @@
  * Copyright (c) 2008-2011 Alexander Chow
  *
  * Pingguo Dictionary is free software: you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as published by the 
- * Free Software Foundation, either version 3 of the License, or (at your 
+ * under the terms of the GNU Lesser General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or (at your
  * option) any later version.
  *
- * Pingguo Dictionary is distributed in the hope that it will be useful, but 
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License 
+ * Pingguo Dictionary is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
  * for more details.
  */
 package com.caorongjin.pingguo;
@@ -17,20 +17,20 @@ public class Word {
 
 	public void append(Word word) {
 		String[] defs = word._defs;
-		
+
 		String[] newDefs = new String[_defs.length + defs.length];
-		
+
 		for (int i = 0; i < _defs.length; i++) {
 			newDefs[i] = _defs[i];
 		}
-		
+
 		for (int i = 0; i < defs.length; i++) {
 			newDefs[i + _defs.length] = defs[i];
 		}
-		
+
 		_defs = newDefs;
 	}
-	
+
 	public void parse(String line) {
 		int x = line.indexOf("[");
 		int y = line.indexOf("]");
@@ -70,11 +70,11 @@ public class Word {
 
 	public String getTitle(boolean pinyin) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(_trad + " / " + _simp + " (");
 		sb.append(pinyin ?  Pinyin.format(_pinyin) : Zhuyin.format(_pinyin));
 		sb.append(")");
-		
+
 		return sb.toString();
 	}
 

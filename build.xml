@@ -37,11 +37,12 @@
 
 	<target name="generate-xml" depends="init">
 		<echo message="${logtime}: Converting CEDICT" />
-			
+
 		<java classname="com.caorongjin.pingguo.Pingguo">
 			<arg value="${rsrc}/${cedict.txt}" />
 			<arg value="${rsrc.py}/Dictionary.xml" />
 			<arg value="${rsrc.zy}/Dictionary.xml" />
+			<arg value="${version}" />
 			<classpath>
 				<pathelement path="${bin}" />
 				<pathelement location="${lib}/${commons-collections.jar}" />
@@ -53,7 +54,6 @@
 		<echo message="${logtime}: Generating pinyin dictionary files" />
 
 		<exec executable="/Developer/Extras/Dictionary Development Kit/bin/build_dict.sh" dir="${rsrc.py}">
-		<!--	<arg value="-v 10.6" />-->
 			<arg value="Pingguo Dictionary PY" />
 			<arg value="${rsrc.py}/Dictionary.xml" />
 			<arg value="${rsrc.py}/Dictionary.css" />
@@ -63,7 +63,6 @@
 		<echo message="${logtime}: Generating zhuyin dictionary files" />
 
 		<exec executable="/Developer/Extras/Dictionary Development Kit/bin/build_dict.sh" dir="${rsrc.zy}">
-		<!--	<arg value="-v 10.6" />-->
 			<arg value="Pingguo Dictionary ZY" />
 			<arg value="${rsrc.zy}/Dictionary.xml" />
 			<arg value="${rsrc.zy}/Dictionary.css" />

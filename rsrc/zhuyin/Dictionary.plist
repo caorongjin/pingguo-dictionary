@@ -20,5 +20,7 @@
 	<string>Dictionary_prefs.html</string>
 	<key>DCSDictionaryXSL</key>
 	<string>Dictionary.xsl</string>
+	<key>DCSDictionaryDefaultPrefs</key>
+	<dict></dict>
 </dict>
 </plist>
