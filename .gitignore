@@ -1,2 +1,5 @@
 .DS_Store
 bin
+rsrc/cedict_ts.u8
+rsrc/pinyin
+rsrc/zhuyin

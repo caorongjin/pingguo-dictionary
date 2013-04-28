@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2008-2011 Alexander Chow
+ * Copyright (c) 2008-2013 Alexander Chow
  *
  * Pingguo Dictionary is free software: you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -32,48 +32,88 @@ public class Pingguo {
 
 	public static void main(String[] args) throws Exception {
 		BufferedReader br = null;
-		BufferedWriter pyw = null;
-		BufferedWriter zyw = null;
+		BufferedWriter pyp = null;
+		BufferedWriter pyx = null;
+		BufferedWriter zyp = null;
+		BufferedWriter zyx = null;
 
 		try {
-			br = new BufferedReader(
-				new InputStreamReader(new FileInputStream(args[0]), "UTF8"));
-			pyw = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(args[1]), "UTF8"));
-			zyw = new BufferedWriter(
-				new OutputStreamWriter(new FileOutputStream(args[2]), "UTF8"));
+			br = _createReader(args[0]);
+
+			pyp = _createWriter(args[1] + "/" + DICTIONARY_PLIST);
+			pyx = _createWriter(args[1] + "/" + DICTIONARY_XML);
+			zyp = _createWriter(args[2] + "/" + DICTIONARY_PLIST);
+			zyx = _createWriter(args[2] + "/" + DICTIONARY_XML);
 
 			_version = args[3];
 
-			Pingguo pg = new Pingguo(br, pyw, zyw);
+			Pingguo pg = new Pingguo(br, pyp, pyx, zyp, zyx);
 
 			pg.generateDictionary();
 		}
 		finally {
-			if (br != null) {
+			_cleanup(br);
+			_cleanup(pyp);
+			_cleanup(pyx);
+			_cleanup(zyp);
+			_cleanup(zyx);
+		}
+	}
+
+	private static void _cleanup(BufferedReader br) {
+		if (br != null) {
+			try {
 				br.close();
 			}
-
-			if (pyw != null) {
-				pyw.close();
-			}
-
-			if (zyw != null) {
-				zyw.close();
+			catch (Exception e) {
 			}
 		}
 	}
 
-	public Pingguo(BufferedReader br, BufferedWriter pyw, BufferedWriter zyw) {
+	private static void _cleanup(BufferedWriter bw) {
+		if (bw != null) {
+			try {
+				bw.close();
+			}
+			catch (Exception e) {
+			}
+		}
+	}
+
+	private static BufferedReader _createReader(String fileName)
+		throws Exception {
+
+		InputStreamReader isr =
+			new InputStreamReader(new FileInputStream(fileName), "UTF8");
+
+		return new BufferedReader(isr);
+	}
+
+	private static BufferedWriter _createWriter(String fileName)
+		throws Exception {
+
+		OutputStreamWriter osw =
+			new OutputStreamWriter(new FileOutputStream(fileName), "UTF8");
+
+		return new BufferedWriter(osw);
+	}
+
+	public Pingguo(
+		BufferedReader br, BufferedWriter pyp, BufferedWriter pyx,
+		BufferedWriter zyp, BufferedWriter zyx) {
+
 		_br = br;
-		_pyw = pyw;
-		_zyw = zyw;
+		_pyp = pyp;
+		_pyx = pyx;
+		_zyp = zyp;
+		_zyx = zyx;
+
 		_mvp = new MultiValueMap();
 	}
 
 	public void generateDictionary() throws Exception {
-		_writePrefix(_pyw);
-		_writePrefix(_zyw);
+		_writePrefix(_pyx);
+		_writePrefix(_zyx);
 
 		Word curr = new Word();
 		Word next = new Word();
@@ -114,8 +154,8 @@ public class Pingguo {
 
 			_id++;
 
-			_insertEntry(_pyw, curr, true);
-			_insertEntry(_zyw, curr, false);
+			_insertEntry(_pyx, curr, true);
+			_insertEntry(_zyx, curr, false);
 
 			final String pyTitle = curr.getTitle(true);
 			final String zyTitle = curr.getTitle(false);
@@ -130,65 +170,14 @@ public class Pingguo {
 			nextLine = null;
 		}
 
-		_buildEnglishIndex(_pyw, true);
-		_buildEnglishIndex(_zyw, false);
+		_buildEnglishIndex(_pyx, true);
+		_buildEnglishIndex(_zyx, false);
 
-		_writePostFix(_pyw, true);
-		_writePostFix(_zyw, false);
-	}
+		_writePostFix(_pyx, true);
+		_writePostFix(_zyx, false);
 
-	private String _readLine() throws Exception {
-		for (;;) {
-			String line = _br.readLine();
-
-			if (line == null) {
-				return null;
-			}
-
-			line = line.trim();
-
-			if (!line.startsWith("#") && line.length() > 0) {
-				return line;
-			}
-			else if (line.startsWith("#! date=")) {
-				line = line.substring(line.indexOf('=') + 1);
-
-				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-
-				Date date = formatter.parse(line);
-
-				formatter = new SimpleDateFormat("dd MMMM yyyy");
-
-				_cedict_release_date = formatter.format(date);
-			}
-		}
-	}
-
-	private void _writePrefix(BufferedWriter bw) throws IOException {
-		bw.write(
-			"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-			"<d:dictionary xmlns=\"http://www.w3.org/1999/xhtml\" " +
-			"xmlns:d=\"http://www.apple.com/DTDs/DictionaryService-1.0.rng\">\n");
-	}
-
-	private void _writePostFix(BufferedWriter bw, boolean pinyin)
-		throws IOException {
-
-		String edition = pinyin ? "(Pinyin Edition)" : "(Zhuyin Edition)";
-
-		bw.write(
-			"<d:entry id=\"front_back_matter\" d:title=\"Front/Back Matter\">\n" +
-			"<h1><b>Pingguo Chinese-English Dictionary v" + _version + ", " +
-			edition + "</b></h1>\n" + "<div>" +
-			"Copyright &#169; 2008-" + _calendar.get(Calendar.YEAR) +
-			" Alexander Chow. Dictionary contents are distributed as " +
-			"<a href=\"http://bit.ly/cc-cedict\">CC-CEDICT</a> (released " +
-			_cedict_release_date + ") under the " +
-			"<a href=\"http://creativecommons.org/licenses/by-sa/3.0/\">" +
-			"Creative Commons Attribution-Share Alike 3.0</a> license." +
-			"</div>\n" +
-			"</d:entry>\n" +
-			"</d:dictionary>");
+		_writePlist(_pyp, true);
+		_writePlist(_zyp, false);
 	}
 
 	private void _buildEnglishIndex(BufferedWriter bw, boolean pinyin)
@@ -245,12 +234,14 @@ public class Pingguo {
 			_insertIndex(bw, word.getPinyin(), title);
 		}
 
-		// Header must basically follow this format in order for the pronunciation to work
-		// <div><h1>make</h1></div><span class="syntax"><span d:pr="">| māk |</span></span>
+		// Traditional / Simplified / Phonetic
 
-		// Characters
+		boolean priority = false;
 
-		bw.write("<div><h1>");
+		bw.write("<span>\n");
+		if (priority) {
+			bw.write("<span d:priority=\"2\">");
+		}
 		bw.write("<span class=\"t\">");
 		bw.write(word.getTrad());
 		bw.write("</span>");
@@ -258,28 +249,36 @@ public class Pingguo {
 		bw.write("<span class=\"s\">");
 		bw.write(word.getSimp());
 		bw.write("</span>");
-		bw.write("</h1></div>\n");
-
-		// Phonetic
-
-		bw.write("<span class=\"syntax\"><span d:pr=\"\">| ");
+		bw.write(" (");
+		if (priority) {
+			bw.write("</span>");
+		}
+		bw.write("<span class=\"syntax\"><span d:pr=\"\">");
 		if (pinyin) {
 			bw.write(Pinyin.format(word.getPinyin()));
 		}
 		else {
 			bw.write(Zhuyin.format(word.getPinyin()));
 		}
-		bw.write(" |</span></span>");
+		bw.write("</span></span>");
+		if (priority) {
+			bw.write("<span d:priority=\"2\">");
+		}
+		bw.write(")");
+		if (priority) {
+			bw.write("</span>");
+		}
+		bw.write("</span>\n");
 
 		// Definition
 
-		bw.write("<div><ul>\n");
+		bw.write("<ul>\n");
 
 		for (String def : word.getDefs()) {
 			bw.write("<li>" + def + "</li>");
 		}
 
-		bw.write("</ul></div>\n");
+		bw.write("</ul>\n");
 		bw.write("</d:entry>\n");
 	}
 
@@ -293,14 +292,118 @@ public class Pingguo {
 		bw.write(" \" />\n");
 	}
 
-	private BufferedReader _br;
-	private BufferedWriter _pyw;
-	private BufferedWriter _zyw;
-	private MultiValueMap _mvp;
-	private long _id = 0;
+	private String _readLine() throws Exception {
+		for (;;) {
+			String line = _br.readLine();
+
+			if (line == null) {
+				return null;
+			}
+
+			line = line.trim();
+
+			if (!line.startsWith("#") && line.length() > 0) {
+				return line;
+			}
+			else if (line.startsWith("#! date=")) {
+				line = line.substring(line.indexOf('=') + 1);
+
+				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
+				Date date = formatter.parse(line);
+
+				formatter = new SimpleDateFormat("dd MMMM yyyy");
+
+				_cedict_release_date = formatter.format(date);
+			}
+		}
+	}
+
+	private void _writePlist(BufferedWriter bw, boolean pinyin)
+		throws IOException {
+
+		String bundleIdentifier = pinyin ? "com.caorongjin.pingguo.PingguoPY" : "com.caorongjin.pingguo.PingguoZY";
+		String bundleName = pinyin ? "Pingguo PY" : "Pingguo ZY";
+		String edition = pinyin ? "(Pinyin Edition)" : "(Zhuyin Edition)";
+		String year = String.valueOf(_calendar.get(Calendar.YEAR));
+
+		bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		bw.write(
+			"<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" " +
+			"\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n");
+		bw.write("<plist version=\"1.0\">\n");
+		bw.write("<dict>\n");
+		bw.write("\t<key>CFBundleDevelopmentRegion</key>\n");
+		bw.write("\t<string>English</string>\n");
+		bw.write("\t<key>CFBundleIdentifier</key>\n");
+		bw.write("\t<string>" + bundleIdentifier + "</string>\n");
+		bw.write("\t<key>CFBundleName</key>\n");
+		bw.write("\t<string>" + bundleName + "</string>\n");
+		bw.write("\t<key>CFBundleShortVersionString</key>\n");
+		bw.write("\t<string>" + _version + "</string>\n");
+		bw.write("\t<key>DCSDictionaryCopyright</key>\n");
+		bw.write(
+			"\t<string>Pingguo Dictionary " + _version + " " + edition +
+			", Copyright &amp;#169; 2008-" + year + " Alexander Chow." +
+			"&lt;br /&gt;&lt;br/&gt;Dictionary contents are distributed as " +
+			"CC-CEDICT by MDBG (http://www.mdbg.net) under the Creative " +
+			"Commons Attribution-Share Alike 3.0 license.</string>\n");
+		bw.write("\t<key>DCSDictionaryManufacturerName</key>\n");
+		bw.write("\t<string>Alexander Chow</string>\n");
+		bw.write("\t<key>DCSDictionaryFrontMatterReferenceID</key>\n");
+		bw.write("\t<string>front_back_matter</string>\n");
+		bw.write("\t<key>DCSDictionaryPrefsHTML</key>\n");
+		bw.write("\t<string>Dictionary_prefs.html</string>\n");
+		bw.write("\t<key>DCSDictionaryXSL</key>\n");
+		bw.write("\t<string>Dictionary.xsl</string>\n");
+		bw.write("\t<key>DCSDictionaryDefaultPrefs</key>\n");
+		bw.write("\t<dict></dict>\n");
+		bw.write("</dict>\n");
+		bw.write("</plist>");
+	}
+
+	private void _writePostFix(BufferedWriter bw, boolean pinyin)
+		throws IOException {
+
+		String edition = pinyin ? "(Pinyin Edition)" : "(Zhuyin Edition)";
+
+		bw.write(
+			"<d:entry id=\"front_back_matter\" " +
+			"d:title=\"Front/Back Matter\">\n");
+		bw.write(
+			"<h1><b>Pingguo Chinese-English Dictionary v" + _version + ", " +
+			edition + "</b></h1>\n" + "<div>" +
+			"Copyright &#169; 2008-" + _calendar.get(Calendar.YEAR) +
+			" Alexander Chow. Dictionary contents are distributed as " +
+			"<a href=\"http://bit.ly/cc-cedict\">CC-CEDICT</a> (released " +
+			_cedict_release_date + ") under the " +
+			"<a href=\"http://creativecommons.org/licenses/by-sa/3.0/\">" +
+			"Creative Commons Attribution-Share Alike 3.0</a> license." +
+			"</div>\n");
+		bw.write("</d:entry>\n");
+		bw.write("</d:dictionary>");
+	}
+
+	private void _writePrefix(BufferedWriter bw) throws IOException {
+		bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		bw.write(
+			"<d:dictionary xmlns=\"http://www.w3.org/1999/xhtml\" " +
+			"xmlns:d=\"http://www.apple.com/DTDs/DictionaryService-1.0.rng\">\n");
+	}
 
 	private static Calendar _calendar = GregorianCalendar.getInstance();
 	private static String _cedict_release_date = "??";
+
 	private static String _version;
+	private static final String DICTIONARY_PLIST = "Dictionary.plist";
+	private static final String DICTIONARY_XML = "Dictionary.xml";
+
+	private BufferedReader _br;
+	private long _id = 0;
+	private MultiValueMap _mvp;
+	private BufferedWriter _pyp;
+	private BufferedWriter _pyx;
+	private BufferedWriter _zyp;
+	private BufferedWriter _zyx;
 
 }
