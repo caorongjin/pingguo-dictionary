@@ -131,14 +131,12 @@
 	<target name="dist-pinyin" if="pinyin">
 		<zip destfile="${dist}/Pingguo Dictionary PY ${pingguo.version}.zip">
 			<zipfileset dir="${rsrc.py}/objects" includes="*.dictionary/**" />
-			<zipfileset dir="${dist}" includes="README.rtfd/**"	/>
 		</zip>
 	</target>
 
 	<target name="dist-zhuyin" if="zhuyin">
 		<zip destfile="${dist}/Pingguo Dictionary ZY ${pingguo.version}.zip">
 			<zipfileset dir="${rsrc.zy}/objects" includes="*.dictionary/**" />
-			<zipfileset dir="${dist}" includes="README.rtfd/**"	/>
 		</zip>
 	</target>
 

@@ -1,5 +1,7 @@
 .DS_Store
 bin
+dist/Pingguo Dictionary PY 1.0.0.4.zip
+dist/Pingguo Dictionary ZY 1.0.0.4.zip
 rsrc/cedict_ts.u8
 rsrc/pinyin
 rsrc/zhuyin
