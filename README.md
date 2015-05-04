@@ -23,6 +23,12 @@ Uninstall
 
 Version History
 ---------------
+1.0.0.6 - May 5, 2015
+*	Based on the 2015-05-04 06:56:16 GMT release of CC-CEDICT.
+
+1.0.0.5 – October 10, 2013
+*	Based on the 2013-10-10 06:18:29 GMT release of CC-CEDICT.
+
 1.0.0.4 - May 4, 2013
 *	Reformatted dictionary entries.
 *	Based on the 2013-05-04 06:18:29 GMT release of CC-CEDICT.
@@ -56,4 +62,4 @@ Version History
 
 License
 -------
-Copyright © 2008-2013 Alexander Chow. Dictionary contents are distributed as CC-CEDICT by MDBG under the Creative Commons Attribution-Share Alike 3.0 license.
+Copyright © 2008-2015 Alexander Chow. Dictionary contents are distributed as CC-CEDICT by MDBG under the Creative Commons Attribution-Share Alike 3.0 license.
