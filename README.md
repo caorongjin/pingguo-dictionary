@@ -23,7 +23,7 @@ Uninstall
 
 Version History
 ---------------
-1.0.0.6 - May 5, 2015
+1.0.0.6 - May 4, 2015
 *	Based on the 2015-05-04 06:56:16 GMT release of CC-CEDICT.
 
 1.0.0.5 – October 10, 2013
